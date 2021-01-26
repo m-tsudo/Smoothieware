@@ -8,14 +8,29 @@
 #pragma once
 
 #include "libs/Module.h"
+#include "libs/Pin.h"
 
 class PulseHandle : public Module{
     public:
         PulseHandle();
         void on_module_loaded();
+        void on_config_reload(void *argument);
+        void on_idle(void *);
 
     private:
-        bool load_config();
-        void on_idle(void*);
+        Pin encoder_a_pin;
+        Pin encoder_b_pin;
+        Pin axis_x_pin;
+        Pin axis_y_pin;
+        Pin axis_z_pin;
+        Pin axis_4_pin;
+        Pin multiplier_1_pin;
+        Pin multiplier_10_pin;
+        Pin multiplier_100_pin;
+		uint8_t axis;
+		uint8_t multiplier;
+        int readEncoderDelta();
+        uint8_t read_axis();
+        uint8_t read_multiplier();
 		uint32_t read_pulse(uint32_t dummy);
 };
