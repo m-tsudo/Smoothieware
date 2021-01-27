@@ -7,6 +7,7 @@
 
 #include "Kernel.h"
 #include "PulseHandle.h"
+#include "PulseHandlePublicAccess.h"
 #include "checksumm.h"
 #include "Config.h"
 #include "ConfigValue.h"
@@ -15,10 +16,10 @@
 #include "Conveyor.h"
 #include "StepperMotor.h"
 #include "SlowTicker.h"
+#include "PublicDataRequest.h"
 #include "mbed.h"
 
 // global config settings
-#define pulsehandle_checksum        CHECKSUM("pulsehandle")
 #define enable_checksum             CHECKSUM("enable")
 #define axis_x_pin_checksum         CHECKSUM("axis_x_pin")
 #define axis_y_pin_checksum         CHECKSUM("axis_y_pin")
@@ -47,8 +48,9 @@ void PulseHandle::on_module_loaded()
         return;
     }
 
-    this->on_config_reload(this);
+    on_config_reload(this);
 
+    register_for_event(ON_GET_PUBLIC_DATA);
     register_for_event(ON_IDLE);
     THEKERNEL->slow_ticker->attach(1000, this, &PulseHandle::read_pulse);
 }
@@ -71,6 +73,17 @@ void PulseHandle::on_config_reload(void *argument)
     this->encoder_b_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, encoder_b_pin_checksum)->by_default("nc")->as_string())->as_input();
 }
 
+void PulseHandle::on_get_public_data(void *argument)
+{
+    PublicDataRequest *pdr = static_cast<PublicDataRequest *>(argument);
+
+    if (!pdr->starts_with(pulsehandle_checksum)) return;
+
+    struct pulsehandle_state *state= static_cast<struct pulsehandle_state *>(pdr->get_data_ptr());
+    state->axis = this->axis;
+    state->multiplier = this->multiplier;
+    pdr->set_taken();
+}
 
 int PulseHandle::readEncoderDelta()
 {
@@ -93,7 +106,7 @@ uint32_t PulseHandle::read_pulse(uint32_t dummy)
     int n_motors= THEROBOT->get_number_registered_motors();
 
     if (change == 0) return 0;
-	if (n_motors <= axis) return 0;
+    if (n_motors <= axis) return 0;
     if (!THECONVEYOR->is_idle()) return 0;
     if (THEKERNEL->is_halted()) return 0;
 
@@ -111,32 +124,32 @@ uint32_t PulseHandle::read_pulse(uint32_t dummy)
 
 uint8_t PulseHandle::read_axis()
 {
-	uint8_t axis = OFF_AXIS;
+    uint8_t axis = OFF_AXIS;
 
-	if (this->axis_x_pin.connected() && this->axis_x_pin.get()) 
-		axis = X_AXIS;
-	else if (this->axis_y_pin.connected() && this->axis_y_pin.get())
-		axis = Y_AXIS;
-	else if (this->axis_z_pin.connected() && this->axis_z_pin.get())
-		axis = Z_AXIS;
-	else if (this->axis_4_pin.connected() && this->axis_4_pin.get())
-		axis = A_AXIS;
+    if (this->axis_x_pin.connected() && this->axis_x_pin.get()) 
+        axis = X_AXIS;
+    else if (this->axis_y_pin.connected() && this->axis_y_pin.get())
+        axis = Y_AXIS;
+    else if (this->axis_z_pin.connected() && this->axis_z_pin.get())
+        axis = Z_AXIS;
+    else if (this->axis_4_pin.connected() && this->axis_4_pin.get())
+        axis = A_AXIS;
 
-	return axis;
+    return axis;
 }
 
 uint8_t PulseHandle::read_multiplier()
 {
-	uint8_t multiplier = 0;
+    uint8_t multiplier = 0;
 
-	if (this->multiplier_1_pin.connected() && this->multiplier_1_pin.get()) 
-		multiplier = 1;
-	else if (this->multiplier_10_pin.connected() && this->multiplier_10_pin.get())
-		multiplier = 10;
-	else if (this->multiplier_100_pin.connected() && this->multiplier_100_pin.get())
-		multiplier = 100;
+    if (this->multiplier_1_pin.connected() && this->multiplier_1_pin.get()) 
+        multiplier = 1;
+    else if (this->multiplier_10_pin.connected() && this->multiplier_10_pin.get())
+        multiplier = 10;
+    else if (this->multiplier_100_pin.connected() && this->multiplier_100_pin.get())
+        multiplier = 100;
 
-	return multiplier;
+    return multiplier;
 }
 
 void PulseHandle::on_idle(void *)

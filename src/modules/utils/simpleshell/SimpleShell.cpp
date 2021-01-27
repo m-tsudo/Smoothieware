@@ -42,6 +42,8 @@
 #include "utils.h"
 #include "AutoPushPop.h"
 
+#include "PulseHandlePublicAccess.h"
+
 #include "system_LPC17xx.h"
 #include "LPC17xx.h"
 
@@ -896,6 +898,16 @@ void SimpleShell::get_command( string parameters, StreamOutput *stream)
     } else if (what == "status") {
         // also ? on serial and usb
         stream->printf("%s\n", THEKERNEL->get_query_string().c_str());
+
+    } else if (what == "pulusehandle") {
+        struct pulsehandle_state state;
+        bool ok = PublicData::get_value(pulsehandle_checksum, pulsehandle_state_checksum, &state);
+        if (ok) {
+            stream->printf("Pulse Handle: axis=%d, multiplier=%d.\n",
+                state.axis, state.multiplier);
+        } else {
+            stream->printf("Pulse Handle: failed to get state.\n");
+        }
 
     } else {
         stream->printf("error:unknown option %s\n", what.c_str());

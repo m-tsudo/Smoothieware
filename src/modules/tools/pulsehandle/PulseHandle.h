@@ -16,6 +16,7 @@ class PulseHandle : public Module{
         void on_module_loaded();
         void on_config_reload(void *argument);
         void on_idle(void *);
+        void on_get_public_data(void* argument);
 
     private:
         Pin encoder_a_pin;
