@@ -30,9 +30,11 @@
 #define encoder_a_pin_checksum      CHECKSUM("encoder_a_pin")
 #define encoder_b_pin_checksum      CHECKSUM("encoder_b_pin")
 
+#define OFF_AXIS 255
+
 PulseHandle::PulseHandle()
 {
-    axis = C_AXIS;
+    axis = OFF_AXIS;
     multiplier = 1;
 }
 
@@ -109,12 +111,32 @@ uint32_t PulseHandle::read_pulse(uint32_t dummy)
 
 uint8_t PulseHandle::read_axis()
 {
-	return X_AXIS;
+	uint8_t axis = OFF_AXIS;
+
+	if (this->axis_x_pin.connected() && this->axis_x_pin.get()) 
+		axis = X_AXIS;
+	else if (this->axis_y_pin.connected() && this->axis_y_pin.get())
+		axis = Y_AXIS;
+	else if (this->axis_z_pin.connected() && this->axis_z_pin.get())
+		axis = Z_AXIS;
+	else if (this->axis_4_pin.connected() && this->axis_4_pin.get())
+		axis = A_AXIS;
+
+	return axis;
 }
 
 uint8_t PulseHandle::read_multiplier()
 {
-	return 1;
+	uint8_t multiplier = 0;
+
+	if (this->multiplier_1_pin.connected() && this->multiplier_1_pin.get()) 
+		multiplier = 1;
+	else if (this->multiplier_10_pin.connected() && this->multiplier_10_pin.get())
+		multiplier = 10;
+	else if (this->multiplier_100_pin.connected() && this->multiplier_100_pin.get())
+		multiplier = 100;
+
+	return multiplier;
 }
 
 void PulseHandle::on_idle(void *)
