@@ -12,6 +12,7 @@
 #include "ConfigValue.h"
 #include "utils.h"
 #include "Robot.h"
+#include "Conveyor.h"
 #include "StepperMotor.h"
 #include "SlowTicker.h"
 #include "mbed.h"
@@ -91,6 +92,7 @@ uint32_t PulseHandle::read_pulse(uint32_t dummy)
 
     if (change == 0) return 0;
 	if (n_motors <= axis) return 0;
+    if (!THECONVEYOR->is_idle()) return 0;
     if (THEKERNEL->is_halted()) return 0;
 
     for (int i = 0; i < multiplier; ++i) {
