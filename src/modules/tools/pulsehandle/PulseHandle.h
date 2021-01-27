@@ -28,10 +28,10 @@ class PulseHandle : public Module{
         Pin multiplier_1_pin;
         Pin multiplier_10_pin;
         Pin multiplier_100_pin;
-		uint8_t axis;
-		uint8_t multiplier;
+        uint8_t axis;
+        uint8_t multiplier;
         int readEncoderDelta();
         uint8_t read_axis();
         uint8_t read_multiplier();
-		uint32_t read_pulse(uint32_t dummy);
+        uint32_t read_pulse(uint32_t dummy);
 };

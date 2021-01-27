@@ -899,14 +899,14 @@ void SimpleShell::get_command( string parameters, StreamOutput *stream)
         // also ? on serial and usb
         stream->printf("%s\n", THEKERNEL->get_query_string().c_str());
 
-    } else if (what == "pulusehandle") {
+    } else if (what == "pulsehandle") {
         struct pulsehandle_state state;
         bool ok = PublicData::get_value(pulsehandle_checksum, pulsehandle_state_checksum, &state);
         if (ok) {
-            stream->printf("Pulse Handle: axis=%d, multiplier=%d.\n",
+            stream->printf("pulse handle: axis=%d, multiplier=%d.\n",
                 state.axis, state.multiplier);
         } else {
-            stream->printf("Pulse Handle: failed to get state.\n");
+            stream->printf("pulse handle: failed to get state.\n");
         }
 
     } else {
