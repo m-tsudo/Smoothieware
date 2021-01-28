@@ -19,6 +19,7 @@ class PulseHandle : public Module{
         void on_get_public_data(void* argument);
 
     private:
+        Pin pilot_pin;
         Pin encoder_a_pin;
         Pin encoder_b_pin;
         Pin axis_x_pin;
@@ -28,6 +29,7 @@ class PulseHandle : public Module{
         Pin multiplier_1_pin;
         Pin multiplier_10_pin;
         Pin multiplier_100_pin;
+        bool moved;
         uint8_t axis;
         uint8_t multiplier;
         int readEncoderDelta();

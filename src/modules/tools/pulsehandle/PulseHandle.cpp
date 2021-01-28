@@ -21,6 +21,7 @@
 
 // global config settings
 #define enable_checksum             CHECKSUM("enable")
+#define pilot_pin_checksum          CHECKSUM("pilot_pin")
 #define axis_x_pin_checksum         CHECKSUM("axis_x_pin")
 #define axis_y_pin_checksum         CHECKSUM("axis_y_pin")
 #define axis_z_pin_checksum         CHECKSUM("axis_z_pin")
@@ -35,6 +36,7 @@
 
 PulseHandle::PulseHandle()
 {
+    moved = false;
     axis = OFF_AXIS;
     multiplier = 1;
 }
@@ -57,6 +59,9 @@ void PulseHandle::on_module_loaded()
 
 void PulseHandle::on_config_reload(void *argument)
 {
+    // pilot
+    this->pilot_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, pilot_pin_checksum)->by_default("nc")->as_string())->as_output();
+
     // axis
     this->axis_x_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, axis_x_pin_checksum)->by_default("nc")->as_string())->as_input();
     this->axis_y_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, axis_y_pin_checksum)->by_default("nc")->as_string())->as_input();
@@ -115,8 +120,7 @@ uint32_t PulseHandle::read_pulse(uint32_t dummy)
         THEROBOT->actuators[axis]->manual_step(change < 0);
     }
 
-    // reset the position based on current actuator position
-    THEROBOT->reset_position_from_current_actuator_position();
+    moved = multiplier > 0;
 
     return 0;
 }
@@ -126,13 +130,13 @@ uint8_t PulseHandle::read_axis()
 {
     uint8_t axis = OFF_AXIS;
 
-    if (this->axis_x_pin.connected() && this->axis_x_pin.get()) 
+    if (this->axis_x_pin.get())
         axis = X_AXIS;
-    else if (this->axis_y_pin.connected() && this->axis_y_pin.get())
+    else if (this->axis_y_pin.get())
         axis = Y_AXIS;
-    else if (this->axis_z_pin.connected() && this->axis_z_pin.get())
+    else if (this->axis_z_pin.get())
         axis = Z_AXIS;
-    else if (this->axis_4_pin.connected() && this->axis_4_pin.get())
+    else if (this->axis_4_pin.get())
         axis = A_AXIS;
 
     return axis;
@@ -142,11 +146,11 @@ uint8_t PulseHandle::read_multiplier()
 {
     uint8_t multiplier = 0;
 
-    if (this->multiplier_1_pin.connected() && this->multiplier_1_pin.get()) 
+    if (this->multiplier_1_pin.get())
         multiplier = 1;
-    else if (this->multiplier_10_pin.connected() && this->multiplier_10_pin.get())
+    else if (this->multiplier_10_pin.get())
         multiplier = 10;
-    else if (this->multiplier_100_pin.connected() && this->multiplier_100_pin.get())
+    else if (this->multiplier_100_pin.get())
         multiplier = 100;
 
     return multiplier;
@@ -154,7 +158,17 @@ uint8_t PulseHandle::read_multiplier()
 
 void PulseHandle::on_idle(void *)
 {
-    axis = this->read_axis();
+    uint8_t axis = this->read_axis();
+    if (axis != this->axis) {
+        this->axis = axis;
+        pilot_pin.set(axis != OFF_AXIS);
+        if (moved) {
+            moved = false;
+            // reset the position based on current actuator position
+            THEROBOT->reset_position_from_current_actuator_position();
+        }
+    }
+
     multiplier = this->read_multiplier();
 }
 
