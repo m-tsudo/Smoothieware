@@ -29,7 +29,9 @@ class PulseHandle : public Module{
         Pin multiplier_1_pin;
         Pin multiplier_10_pin;
         Pin multiplier_100_pin;
-        bool moved;
+        uint8_t multiplier_1_value;
+        uint8_t multiplier_10_value;
+        uint8_t multiplier_100_value;
         uint8_t axis;
         uint8_t multiplier;
         int readEncoderDelta();

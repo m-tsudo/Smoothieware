@@ -20,23 +20,25 @@
 #include "mbed.h"
 
 // global config settings
-#define enable_checksum             CHECKSUM("enable")
-#define pilot_pin_checksum          CHECKSUM("pilot_pin")
-#define axis_x_pin_checksum         CHECKSUM("axis_x_pin")
-#define axis_y_pin_checksum         CHECKSUM("axis_y_pin")
-#define axis_z_pin_checksum         CHECKSUM("axis_z_pin")
-#define axis_4_pin_checksum         CHECKSUM("axis_4_pin")
-#define multiplier_1_pin_checksum   CHECKSUM("multiplier_1_pin")
-#define multiplier_10_pin_checksum  CHECKSUM("multiplier_10_pin")
-#define multiplier_100_pin_checksum CHECKSUM("multiplier_100_pin")
-#define encoder_a_pin_checksum      CHECKSUM("encoder_a_pin")
-#define encoder_b_pin_checksum      CHECKSUM("encoder_b_pin")
+#define enable_checksum               CHECKSUM("enable")
+#define pilot_pin_checksum            CHECKSUM("pilot_pin")
+#define axis_x_pin_checksum           CHECKSUM("axis_x_pin")
+#define axis_y_pin_checksum           CHECKSUM("axis_y_pin")
+#define axis_z_pin_checksum           CHECKSUM("axis_z_pin")
+#define axis_4_pin_checksum           CHECKSUM("axis_4_pin")
+#define multiplier_1_pin_checksum     CHECKSUM("multiplier_1_pin")
+#define multiplier_10_pin_checksum    CHECKSUM("multiplier_10_pin")
+#define multiplier_100_pin_checksum   CHECKSUM("multiplier_100_pin")
+#define multiplier_1_value_checksum   CHECKSUM("multiplier_1_value")
+#define multiplier_10_value_checksum  CHECKSUM("multiplier_10_value")
+#define multiplier_100_value_checksum CHECKSUM("multiplier_100_value")
+#define encoder_a_pin_checksum        CHECKSUM("encoder_a_pin")
+#define encoder_b_pin_checksum        CHECKSUM("encoder_b_pin")
 
 #define OFF_AXIS 255
 
 PulseHandle::PulseHandle()
 {
-    moved = false;
     axis = OFF_AXIS;
     multiplier = 1;
 }
@@ -72,6 +74,9 @@ void PulseHandle::on_config_reload(void *argument)
     this->multiplier_1_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, multiplier_1_pin_checksum)->by_default("nc")->as_string())->as_input();
     this->multiplier_10_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, multiplier_10_pin_checksum)->by_default("nc")->as_string())->as_input();
     this->multiplier_100_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, multiplier_100_pin_checksum)->by_default("nc")->as_string())->as_input();
+    this->multiplier_1_value   = THEKERNEL->config->value( pulsehandle_checksum, multiplier_1_value_checksum)->by_default(1)->as_int();
+    this->multiplier_10_value   = THEKERNEL->config->value( pulsehandle_checksum, multiplier_10_value_checksum)->by_default(10)->as_int();
+    this->multiplier_100_value   = THEKERNEL->config->value( pulsehandle_checksum, multiplier_100_value_checksum)->by_default(100)->as_int();
 
     // encoder
     this->encoder_a_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, encoder_a_pin_checksum)->by_default("nc")->as_string())->as_input();
@@ -119,8 +124,8 @@ uint32_t PulseHandle::read_pulse(uint32_t dummy)
         if (i != 0) wait_us(100);
         THEROBOT->actuators[axis]->manual_step(change < 0);
     }
-
-    moved = multiplier > 0;
+    // reset the position based on current actuator position
+    THEROBOT->reset_position_from_current_actuator_position();
 
     return 0;
 }
@@ -147,28 +152,19 @@ uint8_t PulseHandle::read_multiplier()
     uint8_t multiplier = 0;
 
     if (this->multiplier_1_pin.get())
-        multiplier = 1;
+        multiplier = this->multiplier_1_value;
     else if (this->multiplier_10_pin.get())
-        multiplier = 10;
+        multiplier = this->multiplier_10_value;
     else if (this->multiplier_100_pin.get())
-        multiplier = 100;
+        multiplier = this->multiplier_100_value;
 
     return multiplier;
 }
 
 void PulseHandle::on_idle(void *)
 {
-    uint8_t axis = this->read_axis();
-    if (axis != this->axis) {
-        this->axis = axis;
-        pilot_pin.set(axis != OFF_AXIS);
-        if (moved) {
-            moved = false;
-            // reset the position based on current actuator position
-            THEROBOT->reset_position_from_current_actuator_position();
-        }
-    }
-
+    axis = this->read_axis();
     multiplier = this->read_multiplier();
+    pilot_pin.set(axis != OFF_AXIS);
 }
 

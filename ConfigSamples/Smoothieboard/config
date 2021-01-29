@@ -370,7 +370,7 @@ switch.laser.output_type                       digital
 ## PulseHandle
 pulsehandle.enable                  true              # set to true to enable the pulsehandle code
 
-pulsehandle.pilot_pin               1.23              # pilot pin for pilot lamp
+pulsehandle.pilot_pin               2.6               # pilot pin for pilot lamp
 
 pulsehandle.encoder_a_pin           1.30              # encoder pin
 pulsehandle.encoder_b_pin           1.31              # encoder pin
@@ -382,4 +382,8 @@ pulsehandle.axis_4_pin              0.26!^            # axis pin
 
 pulsehandle.multiplier_1_pin        3.25!^            # multiplier pin
 pulsehandle.multiplier_10_pin       3.26!^            # multiplier pin
-panel.multiplier_100_pin      2.11!^            # multiplier pin
+pulsehandle.multiplier_100_pin      2.11!^            # multiplier pin
+
+pulsehandle.multiplier_1_value         1              # multiplier value
+pulsehandle.multiplier_10_value        4              # multiplier value
+pulsehandle.multiplier_100_value       8              # multiplier value
