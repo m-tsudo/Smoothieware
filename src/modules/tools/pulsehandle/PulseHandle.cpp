@@ -39,6 +39,7 @@
 
 PulseHandle::PulseHandle()
 {
+    delta = 0;
     axis = OFF_AXIS;
     multiplier = 1;
 }
@@ -112,20 +113,7 @@ int PulseHandle::readEncoderDelta()
 // Called every millisecond in an ISR
 uint32_t PulseHandle::read_pulse(uint32_t dummy)
 {
-    int change = this->readEncoderDelta();
-    int n_motors= THEROBOT->get_number_registered_motors();
-
-    if (change == 0) return 0;
-    if (n_motors <= axis) return 0;
-    if (!THECONVEYOR->is_idle()) return 0;
-    if (THEKERNEL->is_halted()) return 0;
-
-    for (int i = 0; i < multiplier; ++i) {
-        if (i != 0) wait_us(100);
-        THEROBOT->actuators[axis]->manual_step(change < 0);
-    }
-    // reset the position based on current actuator position
-    THEROBOT->reset_position_from_current_actuator_position();
+    delta +=  this->readEncoderDelta();
 
     return 0;
 }
@@ -163,8 +151,28 @@ uint8_t PulseHandle::read_multiplier()
 
 void PulseHandle::on_idle(void *)
 {
-    axis = this->read_axis();
+    uint8_t next_axis = this->read_axis();
+    if (axis != next_axis) {
+        axis = next_axis;
+        delta = 0;
+    }
     multiplier = this->read_multiplier();
     pilot_pin.set(axis != OFF_AXIS);
+
+    int tmp = delta;
+    delta = 0;
+    bool dir = tmp > 0;
+    int steps = std::abs(tmp);
+    int n_motors= THEROBOT->get_number_registered_motors();
+    if (THECONVEYOR->is_idle() && (axis < n_motors) && (0 < steps)) {
+        int steps_m = steps * multiplier;
+        for (int i = 0; i < steps_m; ++i) {
+            if (THEKERNEL->is_halted()) break;
+            if (i != 0) wait_us(std::max(120, 1000 / steps_m));
+            THEROBOT->actuators[axis]->manual_step(dir);
+        }
+        // reset the position based on current actuator position
+        THEROBOT->reset_position_from_current_actuator_position();
+    }
 }
 
