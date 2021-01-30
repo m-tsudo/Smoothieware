@@ -36,19 +36,19 @@ alpha_step_pin                               2.0              # Pin for alpha st
 alpha_dir_pin                                0.5              # Pin for alpha stepper direction, add '!' to reverse direction
 alpha_en_pin                                 0.4              # Pin for alpha enable pin
 alpha_current                                1.8              # X stepper motor current
-alpha_max_rate                               30000.0          # Maximum rate in mm/min
+alpha_max_rate                               1000.0           # Maximum rate in mm/min
 
 beta_step_pin                                2.1              # Pin for beta stepper step signal
-beta_dir_pin                                 0.11!             # Pin for beta stepper direction, add '!' to reverse direction
+beta_dir_pin                                 0.11!            # Pin for beta stepper direction, add '!' to reverse direction
 beta_en_pin                                  0.10             # Pin for beta enable
 beta_current                                 1.8              # Y stepper motor current
-beta_max_rate                                30000.0          # Maxmimum rate in mm/min
+beta_max_rate                                1000.0           # Maxmimum rate in mm/min
 
 gamma_step_pin                               2.2              # Pin for gamma stepper step signal
-gamma_dir_pin                                0.20!             # Pin for gamma stepper direction, add '!' to reverse direction
+gamma_dir_pin                                0.20!            # Pin for gamma stepper direction, add '!' to reverse direction
 gamma_en_pin                                 0.19             # Pin for gamma enable
 gamma_current                                1.8              # Z stepper motor current
-gamma_max_rate                               300.0            # Maximum rate in mm/min
+gamma_max_rate                               1000.0           # Maximum rate in mm/min
 
 ## Extruder module configuration
 # See http://smoothieware.org/extruder
@@ -369,8 +369,8 @@ switch.laser.output_type                       digital
 
 ## PulseHandle
 pulsehandle.enable                  true              # set to true to enable the pulsehandle code
-pulsehandle.frequency                1000             # 
-pulsehandle.delay                     100             # 
+pulsehandle.frequency               1000
+pulsehandle.delay                    150
 
 pulsehandle.pilot_pin               2.6               # pilot pin for pilot lamp
 
