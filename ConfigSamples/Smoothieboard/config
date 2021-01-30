@@ -369,6 +369,8 @@ switch.laser.output_type                       digital
 
 ## PulseHandle
 pulsehandle.enable                  true              # set to true to enable the pulsehandle code
+pulsehandle.frequency                1000             # 
+pulsehandle.delay                     100             # 
 
 pulsehandle.pilot_pin               2.6               # pilot pin for pilot lamp
 

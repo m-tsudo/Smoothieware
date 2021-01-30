@@ -21,6 +21,8 @@
 
 // global config settings
 #define enable_checksum               CHECKSUM("enable")
+#define frequency_checksum            CHECKSUM("frequency")
+#define delay_checksum                CHECKSUM("delay")
 #define pilot_pin_checksum            CHECKSUM("pilot_pin")
 #define axis_x_pin_checksum           CHECKSUM("axis_x_pin")
 #define axis_y_pin_checksum           CHECKSUM("axis_y_pin")
@@ -36,6 +38,11 @@
 #define encoder_b_pin_checksum        CHECKSUM("encoder_b_pin")
 
 #define OFF_AXIS 255
+
+typedef enum {
+    IDLE,
+    STEPPING,
+} STATE;
 
 PulseHandle::PulseHandle()
 {
@@ -57,13 +64,15 @@ void PulseHandle::on_module_loaded()
 
     register_for_event(ON_GET_PUBLIC_DATA);
     register_for_event(ON_IDLE);
-    THEKERNEL->slow_ticker->attach(1000, this, &PulseHandle::read_pulse);
+    THEKERNEL->slow_ticker->attach(frequency, this, &PulseHandle::read_pulse);
 }
 
 void PulseHandle::on_config_reload(void *argument)
 {
     // pilot
     this->pilot_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, pilot_pin_checksum)->by_default("nc")->as_string())->as_output();
+    this->frequency = THEKERNEL->config->value( pulsehandle_checksum, frequency_checksum)->by_default("1000")->as_int();
+    this->delay = THEKERNEL->config->value( pulsehandle_checksum, delay_checksum)->by_default("100")->as_int();
 
     // axis
     this->axis_x_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, axis_x_pin_checksum)->by_default("nc")->as_string())->as_input();
@@ -91,6 +100,8 @@ void PulseHandle::on_get_public_data(void *argument)
     if (!pdr->starts_with(pulsehandle_checksum)) return;
 
     struct pulsehandle_state *state= static_cast<struct pulsehandle_state *>(pdr->get_data_ptr());
+    state->frequency = this->frequency;
+    state->delay = this->delay;
     state->axis = this->axis;
     state->multiplier = this->multiplier;
     pdr->set_taken();
@@ -151,6 +162,10 @@ uint8_t PulseHandle::read_multiplier()
 
 void PulseHandle::on_idle(void *)
 {
+    static STATE state = IDLE;
+    if (state == STEPPING)
+        return;
+
     uint8_t next_axis = this->read_axis();
     if (axis != next_axis) {
         axis = next_axis;
@@ -165,14 +180,16 @@ void PulseHandle::on_idle(void *)
     int steps = std::abs(tmp);
     int n_motors= THEROBOT->get_number_registered_motors();
     if (THECONVEYOR->is_idle() && (axis < n_motors) && (0 < steps)) {
+        state = STEPPING;
         int steps_m = steps * multiplier;
         for (int i = 0; i < steps_m; ++i) {
             if (THEKERNEL->is_halted()) break;
-            if (i != 0) wait_us(std::max(120, 1000 / steps_m));
+            if (i != 0) safe_delay_us(std::max(delay, 1000 / steps_m));
             THEROBOT->actuators[axis]->manual_step(dir);
         }
         // reset the position based on current actuator position
         THEROBOT->reset_position_from_current_actuator_position();
+        state = IDLE;
     }
 }
 

@@ -903,8 +903,8 @@ void SimpleShell::get_command( string parameters, StreamOutput *stream)
         struct pulsehandle_state state;
         bool ok = PublicData::get_value(pulsehandle_checksum, pulsehandle_state_checksum, &state);
         if (ok) {
-            stream->printf("pulse handle: axis=%d, multiplier=%d.\n",
-                state.axis, state.multiplier);
+            stream->printf("pulse handle: frequency=%d, delay=%d, axis=%d, multiplier=%d.\n",
+                state.frequency, state.delay, state.axis, state.multiplier);
         } else {
             stream->printf("pulse handle: failed to get state.\n");
         }
