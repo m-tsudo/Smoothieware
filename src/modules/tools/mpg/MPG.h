@@ -10,9 +10,9 @@
 #include "libs/Module.h"
 #include "libs/Pin.h"
 
-class PulseHandle : public Module{
+class MPG : public Module{
     public:
-        PulseHandle();
+        MPG();
         void on_module_loaded();
         void on_config_reload(void *argument);
         void on_idle(void *);

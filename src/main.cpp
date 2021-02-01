@@ -19,7 +19,7 @@
 #include "modules/tools/temperatureswitch/TemperatureSwitch.h"
 #include "modules/tools/drillingcycles/Drillingcycles.h"
 #include "FilamentDetector.h"
-#include "modules/tools/pulsehandle/PulseHandle.h"
+#include "modules/tools/mpg/MPG.h"
 #include "MotorDriverControl.h"
 
 #include "modules/robot/Conveyor.h"
@@ -187,8 +187,8 @@ void init() {
     #ifndef NO_TOOLS_FILAMENTDETECTOR
     kernel->add_module( new(AHB0) FilamentDetector() );
     #endif
-    #ifndef NO_TOOLS_PULSEHANDLE
-    kernel->add_module( new PulseHandle() );
+    #ifndef NO_TOOLS_MPG
+    kernel->add_module( new MPG() );
     #endif
     #ifndef NO_UTILS_MOTORDRIVERCONTROL
     kernel->add_module( new MotorDriverControl(0) );

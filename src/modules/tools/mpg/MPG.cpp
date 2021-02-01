@@ -6,8 +6,8 @@
 */
 
 #include "Kernel.h"
-#include "PulseHandle.h"
-#include "PulseHandlePublicAccess.h"
+#include "MPG.h"
+#include "MPGPublicAccess.h"
 #include "checksumm.h"
 #include "Config.h"
 #include "ConfigValue.h"
@@ -44,17 +44,17 @@ typedef enum {
     STEPPING,
 } STATE;
 
-PulseHandle::PulseHandle()
+MPG::MPG()
 {
     delta = 0;
     axis = OFF_AXIS;
     multiplier = 1;
 }
 
-void PulseHandle::on_module_loaded()
+void MPG::on_module_loaded()
 {
     // if the module is disabled -> do nothing
-    if(! THEKERNEL->config->value(pulsehandle_checksum, enable_checksum)->by_default(false)->as_bool()) {
+    if(! THEKERNEL->config->value(mpg_checksum, enable_checksum)->by_default(false)->as_bool()) {
         // as this module is not needed free up the resource
         delete this;
         return;
@@ -64,42 +64,42 @@ void PulseHandle::on_module_loaded()
 
     register_for_event(ON_GET_PUBLIC_DATA);
     register_for_event(ON_IDLE);
-    THEKERNEL->slow_ticker->attach(frequency, this, &PulseHandle::read_pulse);
+    THEKERNEL->slow_ticker->attach(frequency, this, &MPG::read_pulse);
 }
 
-void PulseHandle::on_config_reload(void *argument)
+void MPG::on_config_reload(void *argument)
 {
     // pilot
-    this->pilot_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, pilot_pin_checksum)->by_default("nc")->as_string())->as_output();
-    this->frequency = THEKERNEL->config->value( pulsehandle_checksum, frequency_checksum)->by_default("1000")->as_int();
-    this->delay = THEKERNEL->config->value( pulsehandle_checksum, delay_checksum)->by_default("100")->as_int();
+    this->pilot_pin.from_string(THEKERNEL->config->value( mpg_checksum, pilot_pin_checksum)->by_default("nc")->as_string())->as_output();
+    this->frequency = THEKERNEL->config->value( mpg_checksum, frequency_checksum)->by_default("1000")->as_int();
+    this->delay = THEKERNEL->config->value( mpg_checksum, delay_checksum)->by_default("100")->as_int();
 
     // axis
-    this->axis_x_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, axis_x_pin_checksum)->by_default("nc")->as_string())->as_input();
-    this->axis_y_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, axis_y_pin_checksum)->by_default("nc")->as_string())->as_input();
-    this->axis_z_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, axis_z_pin_checksum)->by_default("nc")->as_string())->as_input();
-    this->axis_4_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, axis_4_pin_checksum)->by_default("nc")->as_string())->as_input();
+    this->axis_x_pin.from_string(THEKERNEL->config->value( mpg_checksum, axis_x_pin_checksum)->by_default("nc")->as_string())->as_input();
+    this->axis_y_pin.from_string(THEKERNEL->config->value( mpg_checksum, axis_y_pin_checksum)->by_default("nc")->as_string())->as_input();
+    this->axis_z_pin.from_string(THEKERNEL->config->value( mpg_checksum, axis_z_pin_checksum)->by_default("nc")->as_string())->as_input();
+    this->axis_4_pin.from_string(THEKERNEL->config->value( mpg_checksum, axis_4_pin_checksum)->by_default("nc")->as_string())->as_input();
 
     // multiplier
-    this->multiplier_1_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, multiplier_1_pin_checksum)->by_default("nc")->as_string())->as_input();
-    this->multiplier_10_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, multiplier_10_pin_checksum)->by_default("nc")->as_string())->as_input();
-    this->multiplier_100_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, multiplier_100_pin_checksum)->by_default("nc")->as_string())->as_input();
-    this->multiplier_1_value   = THEKERNEL->config->value( pulsehandle_checksum, multiplier_1_value_checksum)->by_default(1)->as_int();
-    this->multiplier_10_value   = THEKERNEL->config->value( pulsehandle_checksum, multiplier_10_value_checksum)->by_default(10)->as_int();
-    this->multiplier_100_value   = THEKERNEL->config->value( pulsehandle_checksum, multiplier_100_value_checksum)->by_default(100)->as_int();
+    this->multiplier_1_pin.from_string(THEKERNEL->config->value( mpg_checksum, multiplier_1_pin_checksum)->by_default("nc")->as_string())->as_input();
+    this->multiplier_10_pin.from_string(THEKERNEL->config->value( mpg_checksum, multiplier_10_pin_checksum)->by_default("nc")->as_string())->as_input();
+    this->multiplier_100_pin.from_string(THEKERNEL->config->value( mpg_checksum, multiplier_100_pin_checksum)->by_default("nc")->as_string())->as_input();
+    this->multiplier_1_value   = THEKERNEL->config->value( mpg_checksum, multiplier_1_value_checksum)->by_default(1)->as_int();
+    this->multiplier_10_value   = THEKERNEL->config->value( mpg_checksum, multiplier_10_value_checksum)->by_default(10)->as_int();
+    this->multiplier_100_value   = THEKERNEL->config->value( mpg_checksum, multiplier_100_value_checksum)->by_default(100)->as_int();
 
     // encoder
-    this->encoder_a_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, encoder_a_pin_checksum)->by_default("nc")->as_string())->as_input();
-    this->encoder_b_pin.from_string(THEKERNEL->config->value( pulsehandle_checksum, encoder_b_pin_checksum)->by_default("nc")->as_string())->as_input();
+    this->encoder_a_pin.from_string(THEKERNEL->config->value( mpg_checksum, encoder_a_pin_checksum)->by_default("nc")->as_string())->as_input();
+    this->encoder_b_pin.from_string(THEKERNEL->config->value( mpg_checksum, encoder_b_pin_checksum)->by_default("nc")->as_string())->as_input();
 }
 
-void PulseHandle::on_get_public_data(void *argument)
+void MPG::on_get_public_data(void *argument)
 {
     PublicDataRequest *pdr = static_cast<PublicDataRequest *>(argument);
 
-    if (!pdr->starts_with(pulsehandle_checksum)) return;
+    if (!pdr->starts_with(mpg_checksum)) return;
 
-    struct pulsehandle_state *state= static_cast<struct pulsehandle_state *>(pdr->get_data_ptr());
+    struct mpg_state *state= static_cast<struct mpg_state *>(pdr->get_data_ptr());
     state->frequency = this->frequency;
     state->delay = this->delay;
     state->axis = this->axis;
@@ -107,7 +107,7 @@ void PulseHandle::on_get_public_data(void *argument)
     pdr->set_taken();
 }
 
-int PulseHandle::readEncoderDelta()
+int MPG::readEncoderDelta()
 {
     static int8_t enc_states[] = {0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0};
     static uint8_t old_AB = 0;
@@ -122,7 +122,7 @@ int PulseHandle::readEncoderDelta()
 }
 
 // Called every millisecond in an ISR
-uint32_t PulseHandle::read_pulse(uint32_t dummy)
+uint32_t MPG::read_pulse(uint32_t dummy)
 {
     delta +=  this->readEncoderDelta();
 
@@ -130,7 +130,7 @@ uint32_t PulseHandle::read_pulse(uint32_t dummy)
 }
 
 
-uint8_t PulseHandle::read_axis()
+uint8_t MPG::read_axis()
 {
     uint8_t axis = OFF_AXIS;
 
@@ -146,7 +146,7 @@ uint8_t PulseHandle::read_axis()
     return axis;
 }
 
-uint8_t PulseHandle::read_multiplier()
+uint8_t MPG::read_multiplier()
 {
     uint8_t multiplier = 0;
 
@@ -160,7 +160,7 @@ uint8_t PulseHandle::read_multiplier()
     return multiplier;
 }
 
-void PulseHandle::on_idle(void *)
+void MPG::on_idle(void *)
 {
     static STATE state = IDLE;
     if (state == STEPPING)
