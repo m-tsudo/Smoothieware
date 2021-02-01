@@ -22,7 +22,6 @@
 // global config settings
 #define enable_checksum               CHECKSUM("enable")
 #define frequency_checksum            CHECKSUM("frequency")
-#define delay_checksum                CHECKSUM("delay")
 #define pilot_pin_checksum            CHECKSUM("pilot_pin")
 #define axis_x_pin_checksum           CHECKSUM("axis_x_pin")
 #define axis_y_pin_checksum           CHECKSUM("axis_y_pin")
@@ -46,9 +45,9 @@ typedef enum {
 
 MPG::MPG()
 {
-    delta = 0;
+    pulses = 0;
     axis = OFF_AXIS;
-    multiplier = 1;
+    multiplier = 0;
 }
 
 void MPG::on_module_loaded()
@@ -72,7 +71,6 @@ void MPG::on_config_reload(void *argument)
     // pilot
     this->pilot_pin.from_string(THEKERNEL->config->value( mpg_checksum, pilot_pin_checksum)->by_default("nc")->as_string())->as_output();
     this->frequency = THEKERNEL->config->value( mpg_checksum, frequency_checksum)->by_default("1000")->as_int();
-    this->delay = THEKERNEL->config->value( mpg_checksum, delay_checksum)->by_default("100")->as_int();
 
     // axis
     this->axis_x_pin.from_string(THEKERNEL->config->value( mpg_checksum, axis_x_pin_checksum)->by_default("nc")->as_string())->as_input();
@@ -101,7 +99,6 @@ void MPG::on_get_public_data(void *argument)
 
     struct mpg_state *state= static_cast<struct mpg_state *>(pdr->get_data_ptr());
     state->frequency = this->frequency;
-    state->delay = this->delay;
     state->axis = this->axis;
     state->multiplier = this->multiplier;
     pdr->set_taken();
@@ -124,7 +121,7 @@ int MPG::readEncoderDelta()
 // Called every millisecond in an ISR
 uint32_t MPG::read_pulse(uint32_t dummy)
 {
-    delta +=  this->readEncoderDelta();
+    pulses +=  this->readEncoderDelta();
 
     return 0;
 }
@@ -169,26 +166,25 @@ void MPG::on_idle(void *)
     uint8_t next_axis = this->read_axis();
     if (axis != next_axis) {
         axis = next_axis;
-        delta = 0;
+        pulses = 0;
     }
     multiplier = this->read_multiplier();
     pilot_pin.set(axis != OFF_AXIS);
 
-    int tmp = delta;
-    delta = 0;
-    bool dir = tmp > 0;
-    int steps = std::abs(tmp);
-    int n_motors= THEROBOT->get_number_registered_motors();
-    if (THECONVEYOR->is_idle() && (axis < n_motors) && (0 < steps)) {
+    int steps = pulses * multiplier;
+    pulses = 0;
+    int n_motors = THEROBOT->get_number_registered_motors();
+    if ((axis < n_motors) && (steps != 0)) {
         state = STEPPING;
-        int steps_m = steps * multiplier;
-        for (int i = 0; i < steps_m; ++i) {
-            if (THEKERNEL->is_halted()) break;
-            if (i != 0) safe_delay_us(std::max(delay, 1000 / steps_m));
-            THEROBOT->actuators[axis]->manual_step(dir);
+        float rate_mm_s = THEROBOT->actuators[axis]->get_max_rate();
+        float delta[n_motors];
+        for (int i = 0; i < n_motors; ++i) {
+            delta[i]= 0;
         }
-        // reset the position based on current actuator position
-        THEROBOT->reset_position_from_current_actuator_position();
+        delta[axis] = steps / THEROBOT->actuators[axis]->get_steps_per_mm();
+        THEROBOT->delta_move(delta, rate_mm_s, n_motors);
+        // turn off queue delay and run it now
+        THECONVEYOR->force_queue();
         state = IDLE;
     }
 }

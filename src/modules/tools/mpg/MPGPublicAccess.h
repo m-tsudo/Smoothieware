@@ -7,7 +7,6 @@
 
 struct mpg_state {
     int frequency;
-    int delay;
     uint8_t axis;
     uint8_t multiplier;
 };

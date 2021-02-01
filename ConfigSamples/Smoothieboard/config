@@ -370,7 +370,6 @@ switch.laser.output_type                       digital
 ## Manual Pulse Generator
 mpg.enable                  true              # set to true to enable the mpg code
 mpg.frequency               1000
-mpg.delay                    150
 
 mpg.pilot_pin               2.6               # pilot pin for pilot lamp
 

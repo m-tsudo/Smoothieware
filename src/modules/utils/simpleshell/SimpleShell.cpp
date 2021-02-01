@@ -903,8 +903,8 @@ void SimpleShell::get_command( string parameters, StreamOutput *stream)
         struct mpg_state state;
         bool ok = PublicData::get_value(mpg_checksum, mpg_state_checksum, &state);
         if (ok) {
-            stream->printf("mpg: frequency=%d, delay=%d, axis=%d, multiplier=%d.\n",
-                state.frequency, state.delay, state.axis, state.multiplier);
+            stream->printf("mpg: frequency=%d, axis=%d, multiplier=%d.\n",
+                state.frequency, state.axis, state.multiplier);
         } else {
             stream->printf("mpg: failed to get state.\n");
         }
