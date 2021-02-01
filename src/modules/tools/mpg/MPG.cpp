@@ -165,6 +165,9 @@ void MPG::on_idle(void *)
 
     uint8_t next_axis = this->read_axis();
     if (axis != next_axis) {
+        if (axis == OFF_AXIS && THEKERNEL->is_halted()) {
+            THEKERNEL->call_event(ON_HALT, (void *)1); // clears on_halt
+        }
         axis = next_axis;
         pulses = 0;
     }
