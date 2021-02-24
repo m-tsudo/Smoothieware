@@ -325,9 +325,9 @@ custom_menu.power_off.command              M81               #
 
 ## Network settings
 # See http://smoothieware.org/network
-network.enable                               true             # Enable the ethernet network services
-network.webserver.enable                     true             # Enable the webserver
-network.telnet.enable                        true             # Enable the telnet server
+network.enable                               false            # Enable the ethernet network services
+network.webserver.enable                     false            # Enable the webserver
+network.telnet.enable                        false            # Enable the telnet server
 #network.ip_address                           auto             # Use dhcp to get ip address
 # Uncomment the 3 below to manually setup ip address
 network.ip_address                           192.168.1.101   # The IP address
@@ -346,7 +346,7 @@ second_usb_serial_enable                     false            # This enables a s
 
 # Kill button maybe assigned to a different pin, set to the onboard pin by default
 # See http://smoothieware.org/killbutton
-kill_button_enable                           true             # Set to true to enable a kill button
+kill_button_enable                           false            # Set to true to enable a kill button
 kill_button_pin                              2.12             # Kill button pin. default is same as pause button 2.12 (2.11 is another good choice)
 
 #msd_disable                                 false            # Disable the MSD (USB SDCARD), see http://smoothieware.org/troubleshooting#disable-msd
